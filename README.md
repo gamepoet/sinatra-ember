@@ -31,7 +31,9 @@ require 'sinatra/ember'
 
 class App < Sinatra::Base
   register Sinatra::Ember
-  serve_templates '/js/templates.js'
+  ember {                                                                                                                
+    templates '/js/templates.js', ['app/templates/*']                                                       
+  }
 end
 ```
 
