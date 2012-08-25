@@ -8,10 +8,12 @@ module Sinatra
       app.extend ClassMethods
     end
 
-    def self.template_path(path, file)
-      unless root.blank?
+    def self.template_name(path, file)
+      unless path.empty?
         file.gsub!(/^#{Regexp.quote(path)}\/?/, '')
       end
+
+      file.slice!(/.(handlebars|hbs|hjs)/)
 
       file
     end
@@ -44,7 +46,7 @@ module Sinatra
               templates = paths.map do |path, files|
                 files.map do |file|
                   content = File.read(file)
-                  "Ember.TEMPLATES[#{self.template_path(path,file)}] = Ember.Handlebars.compile(#{content.inspect});"
+                  "Ember.TEMPLATES[#{Sinatra::Ember.template_name(path,file).inspect}] = Ember.Handlebars.compile(#{content.inspect});"
                 end
               end
 
@@ -57,7 +59,7 @@ module Sinatra
               output = output.strip.gsub(/^ {16}/, '')
 
               # compute the maximum mtime for all paths
-              mtime = paths.map do |path|
+              mtime = paths.flatten.map do |path|
                 if File.file?(path)
                   File.mtime(path).to_i
                 end
