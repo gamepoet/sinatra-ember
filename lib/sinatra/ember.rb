@@ -37,6 +37,7 @@ module Sinatra
                 files.map do |file|
                   content = File.read(file)
                   "Ember.TEMPLATES[#{template_path(path,file)}] = Ember.Handlebars.compile(#{content.inspect});"
+                end
               end
 
               # wrap it up in a closure
