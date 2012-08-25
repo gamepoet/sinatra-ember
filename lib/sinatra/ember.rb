@@ -8,6 +8,16 @@ module Sinatra
       app.extend ClassMethods
     end
 
+    def self.template_name(path, file)
+      unless path.empty?
+        file.gsub!(/^#{Regexp.quote(path)}\/?/, '')
+      end
+
+      file.slice!(/.(handlebars|hbs|hjs)/)
+
+      file
+    end
+
     module ClassMethods
       # set ember options
       def ember(&block)
@@ -22,21 +32,22 @@ module Sinatra
             mtime, output = @template_cache.fetch(route) do
               # find all the template files
               paths = globs.map do |glob|
-                glob = File.expand_path(File.join(settings.root, glob))
-                Dir[glob].map { |x| x.squeeze('/') }
+                files = Dir[glob+"/**/*.{handlebars,hbs,hjs}"].map { |x| x.squeeze('/') }
+                [glob, files.flatten]
               end
-              paths = paths.flatten.uniq
 
               # build up template hash
-              template_paths = {}
-              paths.each do |path|
-                template_paths[File.basename(path, '.hbs')] = path
-              end
+              #template_paths = {}
+              #paths.each do |path|
+              #  template_paths[File.basename(path, '.hbs')] = path
+              #end
 
               # build up the javascript
-              templates = template_paths.map do |(name, path)|
-                content = File.read(path)
-                "Ember.TEMPLATES[#{name.inspect}] = Ember.Handlebars.compile(#{content.inspect});"
+              templates = paths.map do |path, files|
+                files.map do |file|
+                  content = File.read(file)
+                  "Ember.TEMPLATES[#{Sinatra::Ember.template_name(path,file).inspect}] = Ember.Handlebars.compile(#{content.inspect});"
+                end
               end
 
               # wrap it up in a closure
@@ -48,7 +59,7 @@ module Sinatra
               output = output.strip.gsub(/^ {16}/, '')
 
               # compute the maximum mtime for all paths
-              mtime = paths.map do |path|
+              mtime = paths.flatten.map do |path|
                 if File.file?(path)
                   File.mtime(path).to_i
                 end
