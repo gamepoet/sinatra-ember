@@ -22,21 +22,21 @@ module Sinatra
             mtime, output = @template_cache.fetch(route) do
               # find all the template files
               paths = globs.map do |glob|
-                glob = File.expand_path(File.join(settings.root, glob))
-                Dir[glob].map { |x| x.squeeze('/') }
+                files = Dir[glob+"/**/*.{handlebars,hbs,hjs}"].map { |x| x.squeeze('/') }
+                [glob, files.flatten]
               end
-              paths = paths.flatten.uniq
 
               # build up template hash
-              template_paths = {}
-              paths.each do |path|
-                template_paths[File.basename(path, '.hbs')] = path
-              end
+              #template_paths = {}
+              #paths.each do |path|
+              #  template_paths[File.basename(path, '.hbs')] = path
+              #end
 
               # build up the javascript
-              templates = template_paths.map do |(name, path)|
-                content = File.read(path)
-                "Ember.TEMPLATES[#{name.inspect}] = Ember.Handlebars.compile(#{content.inspect});"
+              templates = paths.map do |path, files|
+                files.map do |file|
+                  content = File.read(file)
+                  "Ember.TEMPLATES[#{template_path(path,file)}] = Ember.Handlebars.compile(#{content.inspect});"
               end
 
               # wrap it up in a closure
@@ -62,6 +62,14 @@ module Sinatra
             output
           end
         end
+      end
+      def template_path(path, file)
+
+        unless root.blank?
+          file.gsub!(/^#{Regexp.quote(path)}\/?/, '')
+        end
+
+        file
       end
     end
 
