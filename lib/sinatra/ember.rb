@@ -8,6 +8,14 @@ module Sinatra
       app.extend ClassMethods
     end
 
+    def self.template_path(path, file)
+      unless root.blank?
+        file.gsub!(/^#{Regexp.quote(path)}\/?/, '')
+      end
+
+      file
+    end
+
     module ClassMethods
       # set ember options
       def ember(&block)
@@ -36,7 +44,7 @@ module Sinatra
               templates = paths.map do |path, files|
                 files.map do |file|
                   content = File.read(file)
-                  "Ember.TEMPLATES[#{template_path(path,file)}] = Ember.Handlebars.compile(#{content.inspect});"
+                  "Ember.TEMPLATES[#{self.template_path(path,file)}] = Ember.Handlebars.compile(#{content.inspect});"
                 end
               end
 
@@ -63,14 +71,6 @@ module Sinatra
             output
           end
         end
-      end
-      def template_path(path, file)
-
-        unless root.blank?
-          file.gsub!(/^#{Regexp.quote(path)}\/?/, '')
-        end
-
-        file
       end
     end
 
