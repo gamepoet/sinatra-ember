@@ -87,6 +87,7 @@ Valid options include:
 
 `:path`
 > the template will be named as a relative path to the template file
+
 `:basename`
 > the template will be named as the basename of the template file
 
